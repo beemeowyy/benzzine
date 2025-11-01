@@ -366,6 +366,12 @@
             });
         } catch (error) {
             console.error("Failed to initialize Firebase:", error);
+            // CRITICAL FIX: If initialization fails (due to missing config on external hosting),
+            // we must still set isAuthReady to true and render the static data.
+            userId = 'anon-' + crypto.randomUUID(); // Use an anonymous ID for display
+            document.getElementById('current-user-id').textContent = userId;
+            isAuthReady = true;
+            renderMagazines(magazines);
         }
 
         // --- 1. Magazine Data Management (UPDATE this ANNUALLY) ---
@@ -376,7 +382,7 @@
                 title: "The Future of Design",
                 subtitle: "The definitive guide to minimalist architecture and sustainable living.",
                 thumbnail: "https://placehold.co/400x250/00A389/CCF0E8/png?text=DESIGN+2025", 
-                url: "https://pdflink.to/a06603bd/",
+                url: "https://pdflink.to/be6ab697/",
                 isNew: true
             },
             {
@@ -544,6 +550,10 @@
          * Sets up a real-time listener for all magazine statistics.
          */
         const listenForStats = () => {
+            // Note: This function will likely fail gracefully on external hosting 
+            // if 'db' is not a valid Firestore instance.
+            if (!db) return; 
+
             const statsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'magazine_stats');
             onSnapshot(statsColRef, (snapshot) => {
                 snapshot.docChanges().forEach(change => {
@@ -559,6 +569,10 @@
          * Sets up a real-time listener for the current user's likes.
          */
         const listenForUserLikes = () => {
+             // Note: This function will likely fail gracefully on external hosting 
+             // if 'db' is not a valid Firestore instance.
+            if (!db) return; 
+            
             const userLikesColRef = collection(db, 'artifacts', appId, 'users', userId, 'magazine_user_likes');
             onSnapshot(userLikesColRef, (snapshot) => {
                 userLikes = {};
@@ -576,6 +590,7 @@
          * Increments the view count for a volume when the viewer opens.
          */
         const incrementView = async (volumeId) => {
+             if (!db) return; 
             const statsRef = getStatsDocRef(volumeId);
             const viewDocRef = doc(db, 'artifacts', appId, 'users', userId, 'viewed_volumes', volumeId);
 
@@ -599,6 +614,7 @@
          * Toggles the like status for a volume.
          */
         window.toggleLike = async (volumeId) => {
+             if (!db) return; 
             const statsRef = getStatsDocRef(volumeId);
             const userLikeRef = getUserLikeDocRef(volumeId, userId);
             const isCurrentlyLiked = userLikes[volumeId];
@@ -627,6 +643,7 @@
          * Sets up a real-time listener for comments on the currently viewed volume.
          */
         const listenForComments = (volumeId) => {
+             if (!db) return; 
             if (currentCommentsUnsubscribe) {
                 currentCommentsUnsubscribe(); // Stop listening to previous volume
             }
@@ -676,6 +693,7 @@
          * Submits a new comment to Firestore.
          */
         window.submitComment = async (volumeId) => {
+             if (!db) return; 
             const commentInput = document.getElementById('comment-input');
             const commentText = commentInput.value.trim();
 
@@ -924,4 +942,3 @@
     </script>
 </body>
 </html>
-
