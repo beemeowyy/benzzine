@@ -318,7 +318,7 @@
                 title: "The Future of Design",
                 subtitle: "The definitive guide to minimalist architecture and sustainable living.",
                 thumbnail: "https://placehold.co/400x250/00A389/CCF0E8/png?text=DESIGN+2025", 
-                url: "https://pdflink.to/a06603bd/",
+                url: "https://pdfkit.org/docs/doc.pdf",
                 isNew: true
             },
             {
@@ -486,35 +486,39 @@
         
         /**
          * Safely initializes Firebase and Auth, or falls back to static mode.
+         * The ultra-stable version with multi-layer checks.
          */
         const initializeFirebase = async () => {
-            const { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, getFirestore, setLogLevel, increment } = window.firebaseImports;
+            const { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, getFirestore, setLogLevel } = window.firebaseImports;
             
+            let firebaseConfig = null;
             let shouldInitializeFirebase = false;
-            let firebaseConfig;
 
-            // 1. Check if the environment variables exist (Canvas mode)
-            if (typeof __firebase_config !== 'undefined' && typeof __initial_auth_token !== 'undefined') {
+            // --- Safety Check: Does the config string exist and is it valid? ---
+            if (typeof __firebase_config !== 'undefined' && __firebase_config.trim() !== "") {
                 try {
-                    firebaseConfig = JSON.parse(__firebase_config);
+                    // Layer 1: Attempt to parse the string
+                    const parsedConfig = JSON.parse(__firebase_config);
                     
-                    // 2. CRITICAL VALIDATION: Check if the required config fields are actually present
-                    if (firebaseConfig && firebaseConfig.projectId) {
+                    // Layer 2: Check for the required projectId property
+                    if (parsedConfig && parsedConfig.projectId) {
+                        firebaseConfig = parsedConfig;
                         shouldInitializeFirebase = true;
+                        console.log('Firebase Config found and valid. Initializing...');
                     } else {
-                        throw new Error('Firebase config is incomplete (missing projectId).');
+                        console.warn('Firebase config found but missing "projectId" property. Running in STATIC MODE.');
                     }
-
                 } catch (e) {
-                    console.error('Firebase config parsing failed:', e);
-                    shouldInitializeFirebase = false;
+                    // Layer 3: Catch JSON parsing errors (e.g., if it's an empty string)
+                    console.error('Failed to parse __firebase_config string. Running in STATIC MODE.', e);
                 }
+            } else {
+                console.warn('Firebase configuration not found (Global variable missing or empty). Running in STATIC MODE.');
             }
 
-            // --- Initialization Attempt ---
+            // --- Execution ---
             if (shouldInitializeFirebase) {
                 try {
-                    console.log('Firebase Config found and valid. Initializing...');
                     const app = initializeApp(firebaseConfig);
                     db = getFirestore(app);
                     auth = getAuth(app);
@@ -522,7 +526,7 @@
                     setLogLevel('debug'); // Enable Firestore logging
 
                     // Sign in using the provided custom token or anonymously
-                    if (__initial_auth_token) {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token.trim() !== "") {
                         await signInWithCustomToken(auth, __initial_auth_token);
                     } else {
                         await signInAnonymously(auth);
@@ -542,17 +546,17 @@
                     });
 
                 } catch (e) {
-                    console.error('Failed to initialize or sign into Firebase. Forcing Static Mode.', e);
+                    // If initialization fails at runtime (e.g., incorrect API key)
+                    console.error('Failed to initialize or sign into Firebase at runtime. Forcing Static Mode.', e);
                     
-                    // Fallback to static mode on failure
+                    // Fallback to static mode on runtime failure
                     db = null;
                     isAuthReady = false;
-                    firebaseStatus.textContent = 'Failed (Static Mode)';
+                    firebaseStatus.textContent = 'Runtime Failure (Static Mode)';
                     commentAuthWarning.classList.remove('hidden');
                     renderMagazines(magazines);
                 }
             } else {
-                console.warn('Firebase configuration not found or invalid. Running in STATIC MODE. Interactions are disabled.');
                 // --- Static Mode Fallback ---
                 db = null;
                 isAuthReady = false;
@@ -971,4 +975,3 @@
     </script>
 </body>
 </html>
-
