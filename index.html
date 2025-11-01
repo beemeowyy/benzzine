@@ -7,11 +7,13 @@
     
     <!-- Load Firebase/Firestore Modules -->
     <script type="module">
+        // Use full URLs for external hosting reliability
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, setLogLevel, doc, setDoc, updateDoc, onSnapshot, collection, query, addDoc, getDocs, arrayUnion, arrayRemove, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, setLogLevel, doc, setDoc, updateDoc, onSnapshot, collection, query, addDoc, getDocs, arrayUnion, arrayRemove, serverTimestamp, increment, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        window.firebaseImports = { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, getFirestore, setLogLevel, doc, setDoc, updateDoc, onSnapshot, collection, query, addDoc, getDocs, arrayUnion, arrayRemove, serverTimestamp };
+        // Expose imports globally for use in the main script block
+        window.firebaseImports = { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, getFirestore, setLogLevel, doc, setDoc, updateDoc, onSnapshot, collection, query, addDoc, getDocs, arrayUnion, arrayRemove, serverTimestamp, increment, orderBy };
     </script>
 
     <!-- Load Tailwind CSS -->
@@ -228,7 +230,7 @@
                             Post Comment
                         </button>
                         <p id="comment-error" class="mt-2 text-red-500 text-sm hidden">Error posting comment.</p>
-                        <p id="comment-auth-warning" class="mt-2 text-orange-500 text-sm hidden">Comments are disabled because Firebase could not initialize (e.g., when viewing on GitHub Pages).</p>
+                        <p id="comment-auth-warning" class="mt-2 text-orange-500 text-sm hidden">Comments and Likes are disabled because the Firebase configuration is invalid or missing.</p>
                     </div>
 
                     <!-- Comments List -->
@@ -316,7 +318,7 @@
                 title: "The Future of Design",
                 subtitle: "The definitive guide to minimalist architecture and sustainable living.",
                 thumbnail: "https://placehold.co/400x250/00A389/CCF0E8/png?text=DESIGN+2025", 
-                url: "https://pdflink.to/a06603bd/",
+                url: "https://pdfkit.org/docs/doc.pdf",
                 isNew: true
             },
             {
@@ -341,7 +343,8 @@
         
         let db, auth;
         let userId = null;
-        let isAuthReady = false;
+        // isAuthReady is now purely a flag for when Firestore listeners can start
+        let isAuthReady = false; 
         
         let currentVolumeId = null;
         let currentVolumeTitle = null; 
@@ -467,38 +470,51 @@
 
         const getMagazineDocRef = (magazineId) => {
             if (!db) return null;
-            return firebaseImports.doc(db, 'artifacts', appId, 'public', 'data', 'magazines', magazineId);
+            return window.firebaseImports.doc(db, 'artifacts', appId, 'public', 'data', 'magazines', magazineId);
         }
 
         const getUserLikesDocRef = () => {
              if (!db || !userId) return null;
              // Store likes privately for the user
-            return firebaseImports.doc(db, 'artifacts', appId, 'users', userId, 'likes', 'magazines');
+            return window.firebaseImports.doc(db, 'artifacts', appId, 'users', userId, 'likes', 'magazines');
         }
 
         const getCommentsCollectionRef = (magazineId) => {
             if (!db) return null;
-            return firebaseImports.collection(db, 'artifacts', appId, 'public', 'data', 'magazines', magazineId, 'comments');
+            return window.firebaseImports.collection(db, 'artifacts', appId, 'public', 'data', 'magazines', magazineId, 'comments');
         }
         
         /**
-         * Safely initializes Firebase and Auth.
-         * This check prevents the app from crashing when hosted externally (like on GitHub Pages).
+         * Safely initializes Firebase and Auth, or falls back to static mode.
          */
         const initializeFirebase = async () => {
-            const { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, getFirestore, setLogLevel } = window.firebaseImports;
+            const { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, getFirestore, setLogLevel, increment } = window.firebaseImports;
             
-            // Check for required global variables which are only present in the Canvas environment.
+            let shouldInitializeFirebase = false;
+            let firebaseConfig;
+
+            // 1. Check if the environment variables exist (Canvas mode)
             if (typeof __firebase_config !== 'undefined' && typeof __initial_auth_token !== 'undefined') {
                 try {
-                    console.log('Firebase Config found. Initializing...');
-                    const firebaseConfig = JSON.parse(__firebase_config);
+                    firebaseConfig = JSON.parse(__firebase_config);
                     
-                    // CRITICAL CHECK: Ensure projectId is present (addresses the specific error reported)
-                    if (!firebaseConfig.projectId) {
-                        throw new Error('Project ID is missing from the configuration.');
+                    // 2. CRITICAL VALIDATION: Check if the required config fields are actually present
+                    if (firebaseConfig && firebaseConfig.projectId) {
+                        shouldInitializeFirebase = true;
+                    } else {
+                        throw new Error('Firebase config is incomplete (missing projectId).');
                     }
 
+                } catch (e) {
+                    console.error('Firebase config parsing failed:', e);
+                    shouldInitializeFirebase = false;
+                }
+            }
+
+            // --- Initialization Attempt ---
+            if (shouldInitializeFirebase) {
+                try {
+                    console.log('Firebase Config found and valid. Initializing...');
                     const app = initializeApp(firebaseConfig);
                     db = getFirestore(app);
                     auth = getAuth(app);
@@ -526,18 +542,22 @@
                     });
 
                 } catch (e) {
-                    console.error('Failed to initialize or sign into Firebase. Using static data only.', e);
-                    firebaseStatus.textContent = 'Disabled (Check Console)';
-                    // Fallback: Ensure the app doesn't crash if Firebase setup fails
-                    isAuthReady = true;
-                    renderMagazines(magazines); // Render static content immediately
+                    console.error('Failed to initialize or sign into Firebase. Forcing Static Mode.', e);
+                    
+                    // Fallback to static mode on failure
+                    db = null;
+                    isAuthReady = false;
+                    firebaseStatus.textContent = 'Failed (Static Mode)';
                     commentAuthWarning.classList.remove('hidden');
+                    renderMagazines(magazines);
                 }
             } else {
-                console.warn('Firebase configuration not found. Running in STATIC MODE. Interactions are disabled.');
+                console.warn('Firebase configuration not found or invalid. Running in STATIC MODE. Interactions are disabled.');
+                // --- Static Mode Fallback ---
+                db = null;
+                isAuthReady = false;
                 firebaseStatus.textContent = 'Static Mode (External Host)';
                 // Render static content immediately
-                isAuthReady = true;
                 renderMagazines(magazines); 
                 commentAuthWarning.classList.remove('hidden');
             }
@@ -545,11 +565,11 @@
 
 
         const startMagazineListeners = () => {
-            if (!isAuthReady || !db) return;
+            if (!db) return; // Only proceed if db is successfully initialized
 
             // 1. Listen for Public Magazine Stats (Views/Likes)
-            const collectionRef = firebaseImports.collection(db, 'artifacts', appId, 'public', 'data', 'magazines');
-            firebaseImports.onSnapshot(collectionRef, (snapshot) => {
+            const collectionRef = window.firebaseImports.collection(db, 'artifacts', appId, 'public', 'data', 'magazines');
+            window.firebaseImports.onSnapshot(collectionRef, (snapshot) => {
                 snapshot.forEach((doc) => {
                     magazineStats[doc.id] = doc.data();
                 });
@@ -562,7 +582,7 @@
             // 2. Listen for Current User's Likes
             const userLikesRef = getUserLikesDocRef();
             if (userLikesRef) {
-                 firebaseImports.onSnapshot(userLikesRef, (doc) => {
+                 window.firebaseImports.onSnapshot(userLikesRef, (doc) => {
                     const data = doc.data();
                     if (data && data.likedVolumes) {
                         // Convert array of IDs into a map for fast lookup
@@ -578,9 +598,6 @@
                 }, (error) => {
                     console.error("Error listening to user likes:", error);
                 });
-            } else {
-                // In case of static mode, ensure render runs
-                renderMagazines(magazines);
             }
         };
 
@@ -612,8 +629,8 @@
         };
         
         window.toggleLike = async () => {
-            if (!db || !isAuthReady || !currentVolumeId) {
-                console.warn("Firestore not available or not ready to handle likes.");
+            if (!db) {
+                console.warn("Firestore not available to handle likes.");
                 return;
             }
 
@@ -626,31 +643,32 @@
             try {
                 if (isLiked) {
                     // 1. Remove like from user's list
-                    await firebaseImports.updateDoc(userLikesRef, {
-                        likedVolumes: firebaseImports.arrayRemove(currentVolumeId)
+                    await window.firebaseImports.updateDoc(userLikesRef, {
+                        likedVolumes: window.firebaseImports.arrayRemove(currentVolumeId)
                     });
                     // 2. Decrement public count
-                    await firebaseImports.updateDoc(volumeRef, {
-                         likes: firebaseImports.firebaseImports.increment(-1)
-                    });
+                    await window.firebaseImports.setDoc(volumeRef, {
+                         likes: window.firebaseImports.increment(-1)
+                    }, { merge: true });
                 } else {
                     // 1. Add like to user's list
-                     await firebaseImports.setDoc(userLikesRef, {
-                        likedVolumes: firebaseImports.arrayUnion(currentVolumeId)
+                     await window.firebaseImports.setDoc(userLikesRef, {
+                        likedVolumes: window.firebaseImports.arrayUnion(currentVolumeId)
                     }, { merge: true });
                     // 2. Increment public count
-                    await firebaseImports.setDoc(volumeRef, {
-                         likes: firebaseImports.firebaseImports.increment(1)
+                    await window.firebaseImports.setDoc(volumeRef, {
+                         likes: window.firebaseImports.increment(1)
                     }, { merge: true });
                 }
             } catch (e) {
                 console.error("Error toggling like:", e);
-                alert('Could not process like request. Check console for details.');
+                // Instead of alert, use a console message for no alert rule
+                console.warn('Could not process like request. Check console for details.');
             }
         };
 
         const handleViewsIncrement = async (magazineId) => {
-             if (!db || !isAuthReady) return;
+             if (!db) return; // Only proceed if db is available
 
             // Only increment if we haven't tracked this view in the current session
             const sessionKey = `viewed_${magazineId}`;
@@ -660,8 +678,9 @@
             if (!volumeRef) return;
 
             try {
-                await firebaseImports.setDoc(volumeRef, {
-                    views: firebaseImports.firebaseImports.increment(1)
+                // Use setDoc with merge:true to ensure document exists before incrementing
+                await window.firebaseImports.setDoc(volumeRef, {
+                    views: window.firebaseImports.increment(1)
                 }, { merge: true });
                 sessionStorage.setItem(sessionKey, 'true');
             } catch (e) {
@@ -674,8 +693,8 @@
             const commentText = commentInput.value.trim();
             const commentError = document.getElementById('comment-error');
 
-            if (!db || !isAuthReady) {
-                commentError.textContent = 'Comments are disabled in static mode.';
+            if (!db) {
+                commentError.textContent = 'Comments are disabled. Firebase is not active.';
                 commentError.classList.remove('hidden');
                 return;
             }
@@ -692,11 +711,11 @@
                 const commentsRef = getCommentsCollectionRef(currentVolumeId);
                 const userName = `User ${userId.substring(0, 6)}`;
                 
-                await firebaseImports.addDoc(commentsRef, {
+                await window.firebaseImports.addDoc(commentsRef, {
                     userId: userId,
                     userName: userName,
                     text: commentText,
-                    timestamp: firebaseImports.serverTimestamp()
+                    timestamp: window.firebaseImports.serverTimestamp()
                 });
 
                 commentInput.value = ''; // Clear input
@@ -710,12 +729,13 @@
         };
 
         const renderComment = (comment) => {
-            const timeString = comment.timestamp 
-                ? new Date(comment.timestamp.seconds * 1000).toLocaleString() 
+            // Note: comment.timestamp is a Firestore Timestamp object, need to handle its structure
+            const timeString = comment.timestamp && comment.timestamp.toDate 
+                ? comment.timestamp.toDate().toLocaleString() 
                 : 'Just now...';
 
             // Ensure userName exists, default to a user ID snippet if not
-            const userName = comment.userName || `User ${comment.userId.substring(0, 6)}`;
+            const userName = comment.userName || (comment.userId ? `User ${comment.userId.substring(0, 6)}` : 'Anonymous');
 
             return `
                 <div class="p-4 bg-white rounded-lg shadow-sm border border-gray-200">
@@ -733,23 +753,26 @@
                 unsubscribeComments(); // Clean up previous listener
                 unsubscribeComments = null;
             }
-            if (!db || !isAuthReady) {
-                document.getElementById('comments-loading').classList.add('hidden');
-                document.getElementById('comments-list').innerHTML = ''; // Clear list in static mode
-                return;
-            }
-
-            const commentsRef = getCommentsCollectionRef(magazineId);
-            const q = firebaseImports.query(commentsRef, firebaseImports.orderBy('timestamp', 'desc'));
             
             const commentsListDiv = document.getElementById('comments-list');
             const noCommentsDiv = document.getElementById('no-comments');
             const commentsLoadingDiv = document.getElementById('comments-loading');
             const commentCountTab = document.getElementById('comment-count-tab');
 
+            if (!db) {
+                document.getElementById('comments-loading').classList.add('hidden');
+                commentsListDiv.innerHTML = '<p class="text-gray-700">Comments are disabled (Static Mode)</p>'; 
+                commentCountTab.textContent = '0';
+                return;
+            }
+
+            const commentsRef = getCommentsCollectionRef(magazineId);
+            // Sort by timestamp for latest comments first
+            const q = window.firebaseImports.query(commentsRef, window.firebaseImports.orderBy('timestamp', 'desc'));
+            
             commentsLoadingDiv.classList.remove('hidden');
 
-            unsubscribeComments = firebaseImports.onSnapshot(q, (snapshot) => {
+            unsubscribeComments = window.firebaseImports.onSnapshot(q, (snapshot) => {
                 commentsLoadingDiv.classList.add('hidden');
                 
                 commentCountTab.textContent = snapshot.size;
@@ -806,7 +829,7 @@
             iframe.onload = () => {
                 viewerLoading.classList.add('hidden');
                 iframe.style.opacity = '1';
-                // Only track view if Firebase is available
+                // Only track view if Firebase is available (db is not null)
                 handleViewsIncrement(volumeId);
             };
 
@@ -847,7 +870,7 @@
                 buttons[tabName].classList.remove('border-transparent', 'text-gray-600', 'hover:border-gray-500');
             }
 
-            // Disable comment posting if not authed
+            // Disable comment posting if not authed (db is null)
             postCommentBtn.disabled = !db;
         };
 
@@ -868,6 +891,7 @@
 
         // --- 5. Sharing Functions ---
         const updateShareLinks = (title) => {
+            // Use the current page URL as the share link
             const shareUrl = window.location.href; 
             const encodedShareUrl = encodeURIComponent(shareUrl);
             const shareText = encodeURIComponent(`Check out the new magazine volume: ${title}`);
@@ -947,4 +971,3 @@
     </script>
 </body>
 </html>
-
