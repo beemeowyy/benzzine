@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Annual Magazine Portfolio - Interactive</title>
+    <title>Annual Magazine Portfolio - Static</title>
     
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -20,44 +20,31 @@
                 extend: {
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
-                        heading: ['Fredoka', 'sans-serif'], // New joyful font for headers
+                        heading: ['Fredoka', 'sans-serif'],
                     },
                     colors: {
-                        'primary': '#00A389', // Deep Mint/Emerald accent
-                        'dark-bg': '#CCF0E8', // Very Light Mint for main background
-                        'section-bg': '#00A389', // Darker background for the grid section
-                        'highlight': '#00856E', // Slightly darker primary for hover
-                        'accent-dark': '#005C4E', // New color for bolder CTA hover
-                        'card-bg': '#ffffff', // White for cards/hero
+                        'primary': '#00A389', 
+                        'dark-bg': '#CCF0E8', 
+                        'section-bg': '#00A389', 
+                        'highlight': '#00856E',
+                        'accent-dark': '#005C4E', 
+                        'card-bg': '#ffffff',
                     }
                 }
             }
         }
     </script>
     <style>
-        /* Ensures the whole screen is covered and uses the custom font */
         body {
             font-family: 'Inter', sans-serif;
             min-height: 100vh;
         }
-        /* Custom scrollbar matching the theme */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #CCF0E8; /* Matches dark-bg */
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #00A389; /* Matches primary accent */
-            border-radius: 4px;
-        }
-
-        /* Subtle geometric dot pattern for the dark section background */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #CCF0E8; }
+        ::-webkit-scrollbar-thumb { background: #00A389; border-radius: 4px; }
         .pattern-background-dark {
             background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 0h1v1H1V0zm7 0h1v1H8V0zm3 1h1v1h-1V1zm-3 0h1v1H8V1zm3 3h1v1h-1V4zm-3 0h1v1H8V4zm-7 3h1v1H1V7zm7 0h1v1H8V7zM0 8h1v1H0V8zm4 0h1v1H4V8zm4 0h1v1H8V8zm3 0h1v1h-1V8z' fill='%2300856E' fill-opacity='0.25' fill-rule='evenodd'/%3E%3C/svg%3E");
         }
-        
-        /* Transition for the mobile menu drawer */
         .mobile-menu-drawer {
             transition: transform 0.3s ease-out;
             transform: translateX(-100%);
@@ -69,7 +56,7 @@
 </head>
 <body class="bg-dark-bg text-gray-900 antialiased">
 
-    <!-- MOBILE NAVIGATION DRAWER (New) -->
+    <!-- MOBILE NAVIGATION DRAWER -->
     <div id="mobile-menu" class="mobile-menu-drawer fixed top-0 left-0 h-full w-64 bg-card-bg shadow-2xl z-[60] p-6 flex flex-col">
         <div class="flex justify-between items-center mb-8">
             <h3 class="text-2xl font-bold font-heading text-primary">Minty Press</h3>
@@ -90,7 +77,7 @@
         </nav>
     </div>
 
-    <!-- Backdrop for mobile menu (New) -->
+    <!-- Backdrop for mobile menu -->
     <div id="mobile-menu-backdrop" onclick="closeMenu()" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden"></div>
 
     
@@ -98,11 +85,9 @@
     <header class="relative py-16 sm:py-24 bg-card-bg shadow-xl overflow-hidden shadow-gray-400/30">
         
         <div class="absolute top-0 left-0 p-4 sm:p-6 z-20 flex items-center">
-             <!-- Hamburger Menu (New) -->
             <button onclick="openMenu()" class="text-primary hover:text-highlight transition duration-200 focus:outline-none p-1 rounded-lg mr-4">
                 <i class="ph ph-list text-3xl"></i>
             </button>
-            <!-- Logo Placeholder (New Brand Name) -->
             <span class="text-2xl font-extrabold font-heading text-primary hidden sm:block">Minty Press</span>
         </div>
 
@@ -132,7 +117,6 @@
         <!-- ANGLED DIVIDER -->
         <div class="absolute bottom-0 left-0 w-full leading-[0] z-0" style="transform: scaleX(1.001);">
             <svg class="relative block w-full h-[50px] sm:h-[100px]" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 100" preserveAspectRatio="none">
-                <!-- Path for a simple slant from bottom-left to bottom-right -->
                 <path d="M1200 0L0 100l1200 0Z" class="fill-section-bg"></path>
             </svg>
         </div>
@@ -144,7 +128,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 class="text-4xl font-bold text-white text-center mb-12 font-heading">All Volumes</h2>
 
-            <!-- Search Bar (New) -->
+            <!-- Search Bar -->
             <div class="mb-12 max-w-xl mx-auto">
                 <div class="relative">
                     <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-primary text-xl"></i>
@@ -167,6 +151,7 @@
 
     
     <!-- MAGAZINE VIEWER MODAL -->
+    <!-- NOTE: Comments and Like tabs/buttons are disabled in this static version -->
     <div id="magazine-modal" class="fixed inset-0 bg-black bg-opacity-80 z-50 hidden transition-opacity duration-300 items-center justify-center p-4" onclick="closeViewer()">
         <div class="bg-card-bg rounded-2xl w-full max-w-6xl h-full max-h-[90vh] shadow-2xl overflow-hidden flex flex-col transform transition-all duration-300" onclick="event.stopPropagation()">
             <div class="flex-shrink-0 p-4 border-b border-gray-300">
@@ -181,17 +166,12 @@
                 <div class="flex justify-between items-center">
                     <div class="flex space-x-4">
                         <button id="tab-viewer" onclick="switchTab('viewer')" class="py-2 px-4 text-sm font-medium border-b-2 border-primary text-primary transition duration-200">
-                            <i class="ph ph-book-open text-lg mr-1 inline-block align-middle"></i> Magazine
-                        </button>
-                        <button id="tab-comments" onclick="switchTab('comments')" class="py-2 px-4 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:border-gray-500 transition duration-200">
-                            <i class="ph ph-chat-centered-text text-lg mr-1 inline-block align-middle"></i> Comments (<span id="comment-count-display">0</span>)
+                            <i class="ph ph-book-open text-lg mr-1 inline-block align-middle"></i> Magazine Viewer
                         </button>
                         <button id="tab-share" onclick="switchTab('share')" class="py-2 px-4 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:border-gray-500 transition duration-200">
                             <i class="ph ph-share-network text-lg mr-1 inline-block align-middle"></i> Share
                         </button>
-                    </div>
-                    <div class="text-xs text-gray-600">
-                        User ID: <span id="current-user-id" class="font-mono text-gray-800 text-ellipsis overflow-hidden inline-block max-w-[100px] sm:max-w-full">Loading...</span>
+                         <span class="text-red-500 text-sm italic py-2"> (No Comments/Likes in Static Mode)</span>
                     </div>
                 </div>
             </div>
@@ -203,7 +183,7 @@
                 <!-- Viewer Tab Content -->
                 <div id="viewer-tab" class="absolute inset-0 transition duration-300">
                     
-                    <!-- Loading Spinner (New) -->
+                    <!-- Loading Spinner -->
                     <div id="viewer-loading" class="absolute inset-0 bg-gray-50 flex flex-col items-center justify-center z-40 transition-opacity duration-300">
                         <i class="ph ph-hourglass-half text-6xl text-primary animate-spin"></i>
                         <p class="mt-4 text-lg text-gray-600">Volume is loading...</p>
@@ -213,35 +193,17 @@
                     <iframe id="viewer-iframe" src="" frameborder="0" class="w-full h-full bg-gray-100" style="opacity: 0;"></iframe>
                     
                     
-                    <!-- Like Button Overlay -->
+                    <!-- Like Button Overlay (DISABLED IN STATIC) -->
                     <div class="absolute bottom-0 left-0 right-0 p-3 bg-card-bg/95 backdrop-blur-sm border-t border-gray-300 flex justify-end space-x-4">
-                        <button id="like-button" onclick="toggleLike(currentVolumeId)" class="flex items-center space-x-2 px-4 py-2 rounded-full text-white bg-primary hover:bg-highlight transition">
+                        <button class="flex items-center space-x-2 px-4 py-2 rounded-full text-gray-400 bg-gray-200 cursor-not-allowed">
                             <i class="ph ph-heart text-xl"></i>
-                            <span class="font-semibold" id="like-count-display">0</span>
+                            <span class="font-semibold">Likes Disabled</span>
                         </button>
                     </div>
                 </div>
 
                 
-                <!-- Comments Tab Content -->
-                <div id="comments-tab" class="absolute inset-0 bg-gray-100 p-4 flex flex-col hidden transition duration-300">
-                    <div class="flex-grow overflow-y-auto space-y-4 pr-2" id="comments-list">
-                        
-                        <p class="text-gray-600 text-center pt-8" id="no-comments-message">Be the first to comment!</p>
-                    </div>
-                    
-                    
-                    <!-- Comment Input -->
-                    <div class="flex-shrink-0 mt-4 pt-4 border-t border-gray-300">
-                        <!-- Note: The JS 'submitComment' function prevents empty submissions -->
-                        <textarea id="comment-input" class="w-full p-3 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-primary focus:border-primary resize-none" rows="2" placeholder="Write your thoughts..."></textarea>
-                        <button onclick="submitComment(currentVolumeId)" class="mt-2 w-full py-2 bg-primary text-white font-semibold rounded-lg hover:bg-highlight transition">
-                            Submit Comment
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Share Tab Content (MODERNIZED) -->
+                <!-- Share Tab Content -->
                 <div id="share-tab" class="absolute inset-0 bg-gray-100 p-8 flex flex-col hidden transition duration-300 overflow-y-auto">
                     <h4 class="text-2xl font-bold text-gray-900 mb-2 font-heading">Share This Volume</h4>
                     <p class="text-gray-600 mb-8">Share a direct link or post the volume to your favorite social networks.</p>
@@ -295,7 +257,7 @@
     </div>
 
     
-    <!-- FOOTER (Updated for links) -->
+    <!-- FOOTER -->
     <footer class="bg-card-bg mt-16 py-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-700">
             <div class="flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-8 mb-4">
@@ -308,73 +270,9 @@
     </footer>
 
     
-    <!-- JAVASCRIPT LOGIC (Firebase, UI, Search, and Menu) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, query, where, addDoc, updateDoc, increment, runTransaction, getDocs, deleteDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // --- 0. Firebase Setup (MANDATORY GLOBALS) ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-
-        let db, auth, userId;
-        let isAuthReady = false;
-        let currentVolumeId = null;
-        let currentVolumeTitle = null; // Store current title for sharing
-
-        // Firestore Path Helpers
-        const getStatsDocRef = (volumeId) => doc(db, 'artifacts', appId, 'public', 'data', 'magazine_stats', volumeId);
-        const getCommentsCollectionRef = () => collection(db, 'artifacts', appId, 'public', 'data', 'magazine_comments');
-        const getUserLikeDocRef = (volumeId, uid) => doc(db, 'artifacts', appId, 'users', uid, 'magazine_user_likes', volumeId);
-
-        // Initialize Firebase
-        try {
-            const app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-            setLogLevel('debug'); // Enable debug logging for Firebase
-
-            // Handle Authentication
-            onAuthStateChanged(auth, async (user) => {
-                if (!user) {
-                    // Attempt to sign in with provided token or anonymously
-                    try {
-                        if (typeof __initial_auth_token !== 'undefined') {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                            userId = auth.currentUser.uid;
-                        } else {
-                            await signInAnonymously(auth);
-                            userId = auth.currentUser.uid;
-                        }
-                    } catch (error) {
-                        console.error("Firebase authentication error. Falling back to anonymous ID:", error);
-                        userId = 'anon-' + crypto.randomUUID(); // Fallback ID
-                    }
-                } else {
-                    userId = user.uid;
-                }
-                
-                isAuthReady = true;
-                document.getElementById('current-user-id').textContent = userId;
-                console.log("Auth ready. User ID:", userId);
-                
-                // Once authenticated, render content and start listeners
-                renderMagazines(magazines); // Pass the full list initially
-                listenForStats();
-                listenForUserLikes();
-            });
-        } catch (error) {
-            console.error("Failed to initialize Firebase:", error);
-            // CRITICAL FIX: If initialization fails (due to missing config on external hosting),
-            // we must still set isAuthReady to true and render the static data.
-            userId = 'anon-' + crypto.randomUUID(); // Use an anonymous ID for display
-            document.getElementById('current-user-id').textContent = userId;
-            isAuthReady = true;
-            renderMagazines(magazines);
-        }
-
-        // --- 1. Magazine Data Management (UPDATE this ANNUALLY) ---
+    <!-- JAVASCRIPT LOGIC (Static Rendering Only) -->
+    <script>
+        // --- 1. Magazine Data Management ---
         const magazines = [
             {
                 id: "v2025-design",
@@ -382,7 +280,7 @@
                 title: "The Future of Design",
                 subtitle: "The definitive guide to minimalist architecture and sustainable living.",
                 thumbnail: "https://placehold.co/400x250/00A389/CCF0E8/png?text=DESIGN+2025", 
-                url: "https://pdflink.to/be6ab697/",
+                url: "https://pdfkit.org/docs/doc.pdf",
                 isNew: true
             },
             {
@@ -405,17 +303,21 @@
             }
         ];
 
-        let magazineStats = {}; // Stores real-time views and likes
-        let userLikes = {}; // Tracks which volumes the current user has liked
-        let currentCommentsUnsubscribe = null; // To manage the comments listener
+        let currentVolumeId = null;
+        let currentVolumeTitle = null; 
+        let magazineStats = {
+            "v2025-design": { views: 3500, likes: 212 },
+            "v2024-digital-age": { views: 5200, likes: 450 },
+            "v2023-craftsmanship": { views: 1800, likes: 120 }
+        };
+        let userLikes = {}; // Always empty in static mode
 
         // --- 2. DOM Elements and Utility Functions ---
         const magazineGrid = document.getElementById('magazine-grid');
         const modal = document.getElementById('magazine-modal');
         const iframe = document.getElementById('viewer-iframe');
         const modalTitle = document.getElementById('modal-title');
-        const likeButton = document.getElementById('like-button');
-        const viewerLoading = document.getElementById('viewer-loading'); // New element
+        const viewerLoading = document.getElementById('viewer-loading');
 
         /**
          * Formats a number for readability (e.g., 12345 -> 12.3K)
@@ -432,7 +334,7 @@
          */
         const createMagazineCard = (mag) => {
             const stats = magazineStats[mag.id] || { views: 0, likes: 0 };
-            const isLiked = userLikes[mag.id];
+            const isLiked = userLikes[mag.id]; // Always false in static mode
 
             const newBadge = mag.isNew ? `
                 <span class="absolute top-2 right-2 inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-white bg-highlight rounded-full transform rotate-3 shadow-lg z-20">
@@ -446,27 +348,20 @@
                     
                     ${newBadge}
 
-                    
-                    <!-- Magazine Cover Area (Now uses the thumbnail) -->
                     <div class="relative h-64 overflow-hidden rounded-t-2xl z-10">
                         <img src="${mag.thumbnail}" alt="Cover Image for ${mag.title}" 
                              class="w-full h-full object-cover transition duration-300 transform hover:scale-105"
                              onerror="this.onerror=null; this.src='https://placehold.co/400x250/D2D2D2/333333?text=Cover+Not+Found';" />
                         
-                        <!-- Year Overlay for context -->
                         <div class="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition duration-300">
                             <p class="text-white text-6xl font-heading font-bold">${mag.year}</p>
                         </div>
                     </div>
 
-                    
-                    <!-- Magazine Details Footer -->
                     <div class="p-4 bg-card-bg border-t-4 border-primary rounded-b-2xl">
                         <h4 class="text-xl font-bold text-gray-900 mb-2 font-heading">${mag.title}</h4>
                         <p class="text-sm text-gray-700 mb-3">${mag.subtitle}</p>
                         
-                        
-                        <!-- Stats -->
                         <div class="flex justify-between items-center text-sm text-gray-600 mt-2 border-t border-gray-300 pt-3">
                             <span class="flex items-center space-x-1">
                                 <i class="ph ph-eye text-base text-primary"></i>
@@ -484,11 +379,8 @@
 
         /**
          * Renders a list of magazine cards to the grid.
-         * @param {Array} list - The list of magazines to render (can be filtered).
          */
         const renderMagazines = (list) => {
-            if (!isAuthReady) return; // Wait for authentication
-
             // Sort by year, newest first
             list.sort((a, b) => b.year - a.year);
             
@@ -500,7 +392,7 @@
         };
 
         /**
-         * Filters the magazines based on the search input value. (New Function)
+         * Filters the magazines based on the search input value.
          */
         window.filterMagazines = () => {
             const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
@@ -520,226 +412,102 @@
         };
 
 
-        /**
-         * Updates the stats displayed on a single card element.
-         */
-        const updateCardStats = (volumeId) => {
-            const stats = magazineStats[volumeId] || { views: 0, likes: 0 };
-            const isLiked = userLikes[volumeId];
-            
-            // Update the card views and likes
-            document.querySelectorAll(`.stats-views[data-id="${volumeId}"]`).forEach(el => el.textContent = `${formatCount(stats.views)} Views`);
-            document.querySelectorAll(`.stats-likes[data-id="${volumeId}"]`).forEach(el => el.textContent = `${formatCount(stats.likes)} Loves`);
-            
-            // Update the card heart icon color
-            const heartIcon = document.querySelector(`#card-${volumeId} .ph-heart`);
-            if (heartIcon) {
-                heartIcon.classList.toggle('text-red-500', isLiked);
-                heartIcon.classList.toggle('text-gray-600', !isLiked);
-            }
-            
-            // Update the modal like button state if open
-            if (currentVolumeId === volumeId) {
-                updateModalLikeState(volumeId);
-            }
-        }
-
-        // --- 3. Firestore Listeners and Actions (Unchanged) ---
+        // --- 3. UI/Modal Functions ---
         
-        /**
-         * Sets up a real-time listener for all magazine statistics.
-         */
-        const listenForStats = () => {
-            // Note: This function will likely fail gracefully on external hosting 
-            // if 'db' is not a valid Firestore instance.
-            if (!db) return; 
-
-            const statsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'magazine_stats');
-            onSnapshot(statsColRef, (snapshot) => {
-                snapshot.docChanges().forEach(change => {
-                    magazineStats[change.doc.id] = change.doc.data();
-                    updateCardStats(change.doc.id);
-                });
-            }, (error) => {
-                console.error("Error listening to magazine stats:", error);
-            });
+        window.openMenu = () => {
+            document.getElementById('mobile-menu').classList.add('open');
+            document.getElementById('mobile-menu-backdrop').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
         };
 
-        /**
-         * Sets up a real-time listener for the current user's likes.
-         */
-        const listenForUserLikes = () => {
-             // Note: This function will likely fail gracefully on external hosting 
-             // if 'db' is not a valid Firestore instance.
-            if (!db) return; 
-            
-            const userLikesColRef = collection(db, 'artifacts', appId, 'users', userId, 'magazine_user_likes');
-            onSnapshot(userLikesColRef, (snapshot) => {
-                userLikes = {};
-                snapshot.forEach(doc => {
-                    userLikes[doc.id] = true; // Key = volumeId
-                });
-                // Re-render to reflect new like states on cards
-                renderMagazines(magazines); // Pass the full list to re-render all cards
-            }, (error) => {
-                console.error("Error listening to user likes:", error);
-            });
-        };
-
-        /**
-         * Increments the view count for a volume when the viewer opens.
-         */
-        const incrementView = async (volumeId) => {
-             if (!db) return; 
-            const statsRef = getStatsDocRef(volumeId);
-            const viewDocRef = doc(db, 'artifacts', appId, 'users', userId, 'viewed_volumes', volumeId);
-
-            // Use a transaction to ensure atomic operations
-            try {
-                await runTransaction(db, async (transaction) => {
-                    const viewDoc = await transaction.get(viewDocRef);
-                    if (!viewDoc.exists()) {
-                        // 1. Increment public view count only if user hasn't viewed it yet
-                        transaction.set(statsRef, { views: increment(1), likes: 0 }, { merge: true });
-                        // 2. Mark as viewed for this user (private path)
-                        transaction.set(viewDocRef, { viewedAt: new Date().toISOString() });
-                    }
-                });
-            } catch (error) {
-                console.error("Transaction failed to increment view:", error);
-            }
+        window.closeMenu = () => {
+            document.getElementById('mobile-menu').classList.remove('open');
+            document.getElementById('mobile-menu-backdrop').classList.add('hidden');
+            document.body.style.overflow = 'auto';
         };
         
-        /**
-         * Toggles the like status for a volume.
-         */
-        window.toggleLike = async (volumeId) => {
-             if (!db) return; 
-            const statsRef = getStatsDocRef(volumeId);
-            const userLikeRef = getUserLikeDocRef(volumeId, userId);
-            const isCurrentlyLiked = userLikes[volumeId];
-
-            try {
-                await runTransaction(db, async (transaction) => {
-                    const statsDoc = await transaction.get(statsRef);
-                    
-                    if (isCurrentlyLiked) {
-                        // User is UNLIKING: Decrement public count and delete private record
-                        const currentLikes = statsDoc.data()?.likes || 1;
-                        transaction.update(statsRef, { likes: increment(-1) });
-                        transaction.delete(userLikeRef);
-                    } else {
-                        // User is LIKING: Increment public count and set private record
-                        transaction.set(statsRef, { likes: increment(1), views: 0 }, { merge: true });
-                        transaction.set(userLikeRef, { likedAt: new Date().toISOString() });
-                    }
-                });
-            } catch (error) {
-                console.error("Transaction failed to toggle like:", error);
-            }
-        };
-        
-        /**
-         * Sets up a real-time listener for comments on the currently viewed volume.
-         */
-        const listenForComments = (volumeId) => {
-             if (!db) return; 
-            if (currentCommentsUnsubscribe) {
-                currentCommentsUnsubscribe(); // Stop listening to previous volume
-            }
+        window.openViewer = (volumeId, url, title) => {
+            currentVolumeId = volumeId;
+            currentVolumeTitle = title;
             
-            const commentsList = document.getElementById('comments-list');
-            const noCommentsMessage = document.getElementById('no-comments-message');
-            const commentCountDisplay = document.getElementById('comment-count-display');
-            const commentsRef = getCommentsCollectionRef();
+            viewerLoading.classList.remove('hidden');
+            iframe.style.opacity = '0'; 
+
+            iframe.src = url;
+            modalTitle.textContent = title;
             
-            // Query for comments matching the current volume ID, sorted by date
-            const q = query(commentsRef, where("volumeId", "==", volumeId));
+            switchTab('viewer'); 
+            updateShareLinks(title);
+            
+            if (!navigator.share) {
+                document.getElementById('web-share-button').classList.add('hidden');
+            }
 
-            currentCommentsUnsubscribe = onSnapshot(q, (snapshot) => {
-                let html = '';
-                const comments = [];
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    comments.push({ id: doc.id, ...data });
-                });
-                
-                // Sort comments newest first (or oldest first, depends on preference)
-                comments.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            iframe.onload = () => {
+                viewerLoading.classList.add('hidden');
+                iframe.style.opacity = '1';
+            };
 
-                comments.forEach(comment => {
-                    const formattedDate = new Date(comment.timestamp).toLocaleString();
-                    html += `
-                        <div class="p-3 bg-gray-200 rounded-lg">
-                            <p class="text-sm text-gray-800">${comment.text}</p>
-                            <div class="text-xs text-gray-600 mt-2 flex justify-between">
-                                <span>By: ${comment.userId.substring(0, 10)}...</span>
-                                <span>${formattedDate}</span>
-                            </div>
-                        </div>
-                    `;
-                });
 
-                commentsList.innerHTML = html;
-                commentCountDisplay.textContent = comments.length;
-                noCommentsMessage.style.display = comments.length === 0 ? 'block' : 'none';
-                
-            }, (error) => {
-                console.error("Error listening to comments:", error);
-            });
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden'; 
         };
 
-        /**
-         * Submits a new comment to Firestore.
-         */
-        window.submitComment = async (volumeId) => {
-             if (!db) return; 
-            const commentInput = document.getElementById('comment-input');
-            const commentText = commentInput.value.trim();
+        window.switchTab = (tabName) => {
+            // Tab contents (only viewer and share exist in static mode)
+            const tabs = {
+                viewer: document.getElementById('viewer-tab'),
+                share: document.getElementById('share-tab')
+            };
+            // Tab buttons
+            const buttons = {
+                viewer: document.getElementById('tab-viewer'),
+                share: document.getElementById('tab-share')
+            };
 
-            if (!commentText) return; // Prevent empty comments
-            
-            try {
-                await addDoc(getCommentsCollectionRef(), {
-                    volumeId: volumeId,
-                    userId: userId,
-                    text: commentText,
-                    timestamp: new Date().toISOString()
-                });
-                commentInput.value = ''; // Clear input on success
-            } catch (error) {
-                console.error("Error submitting comment:", error);
+            for (const key in tabs) {
+                if (tabs[key]) tabs[key].classList.add('hidden');
+                if (buttons[key]) {
+                    buttons[key].classList.remove('border-primary', 'text-primary');
+                    buttons[key].classList.add('border-transparent', 'text-gray-600', 'hover:border-gray-500');
+                }
+            }
+            // Show selected tab
+            if (tabs[tabName]) tabs[tabName].classList.remove('hidden');
+            if (buttons[tabName]) {
+                buttons[tabName].classList.add('border-primary', 'text-primary');
+                buttons[tabName].classList.remove('border-transparent', 'text-gray-600', 'hover:border-gray-500');
             }
         };
 
-        // --- 4. Social Sharing Functions (Updated) ---
-        
-        /**
-         * Prepares and updates the share links in the modal.
-         */
+        window.closeViewer = () => {
+            currentVolumeId = null;
+            currentVolumeTitle = null;
+
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            iframe.src = ''; 
+            document.body.style.overflow = 'auto'; 
+        };
+
+        // --- 4. Sharing Functions (Unchanged) ---
         const updateShareLinks = (title) => {
-            const shareUrl = window.location.href; // The URL of the current app container
+            const shareUrl = window.location.href; 
             const encodedShareUrl = encodeURIComponent(shareUrl);
             const shareText = encodeURIComponent(`Check out the new magazine volume: ${title}`);
 
-            // 1. Update the display input field
             document.getElementById('share-link-display').value = shareUrl;
 
-            // 2. Update social links
             document.getElementById('share-twitter').href = `https://twitter.com/intent/tweet?url=${encodedShareUrl}&text=${shareText}`;
             document.getElementById('share-facebook').href = `https://www.facebook.com/sharer/sharer.php?u=${encodedShareUrl}&quote=${shareText}`;
             document.getElementById('share-linkedin').href = `https://www.linkedin.com/shareArticle?mini=true&url=${encodedShareUrl}&title=${encodeURIComponent(title)}&summary=${shareText}&source=${encodedShareUrl}`;
         };
         
-        /**
-         * Copies the share link to the clipboard.
-         */
         window.copyShareLink = () => {
             const shareMessage = document.getElementById('share-message');
-            // Use the value from the dedicated input field
             const linkToCopy = document.getElementById('share-link-display').value; 
             
-            // Use execCommand for broader iFrame compatibility
             const textarea = document.createElement('textarea');
             textarea.value = linkToCopy;
             document.body.appendChild(textarea);
@@ -748,28 +516,21 @@
             try {
                 document.execCommand('copy');
                 shareMessage.textContent = 'Link copied to clipboard!';
-                shareMessage.classList.remove('hidden');
-                shareMessage.classList.remove('text-red-500');
+                shareMessage.classList.remove('hidden', 'text-red-500');
                 shareMessage.classList.add('text-green-600');
             } catch (err) {
-                console.error('Failed to copy text: ', err);
                 shareMessage.textContent = 'Could not copy link. Try selecting and copying manually.';
-                shareMessage.classList.remove('hidden');
-                shareMessage.classList.remove('text-green-600');
+                shareMessage.classList.remove('hidden', 'text-green-600');
                 shareMessage.classList.add('text-red-500');
             }
             
             document.body.removeChild(textarea);
 
-            // Hide message after a short delay
             setTimeout(() => {
                 shareMessage.classList.add('hidden');
             }, 3000);
         };
         
-        /**
-         * Uses the native Web Share API for mobile devices.
-         */
         window.shareViaWebAPI = async () => {
             const shareData = {
                 title: currentVolumeTitle,
@@ -781,161 +542,24 @@
                 try {
                     await navigator.share(shareData);
                 } catch (err) {
-                    console.error('Error sharing:', err);
-                    // Fallback to copy link if native sharing fails
-                    window.copyShareLink();
+                    // Ignore user cancellation
                 }
             } else {
-                // If Web Share API is not supported, just copy the link
                 window.copyShareLink();
             }
         }
 
 
-        // --- 5. UI/Modal Functions ---
-        
-        /**
-         * Opens the mobile navigation menu. (New Function)
-         */
-        window.openMenu = () => {
-            document.getElementById('mobile-menu').classList.add('open');
-            document.getElementById('mobile-menu-backdrop').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        };
-
-        /**
-         * Closes the mobile navigation menu. (New Function)
-         */
-        window.closeMenu = () => {
-            document.getElementById('mobile-menu').classList.remove('open');
-            document.getElementById('mobile-menu-backdrop').classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        };
-
-        /**
-         * Updates the visual state of the like button in the modal.
-         */
-        const updateModalLikeState = (volumeId) => {
-            const isLiked = userLikes[volumeId];
-            const stats = magazineStats[volumeId] || { likes: 0 };
-            
-            document.getElementById('like-count-display').textContent = formatCount(stats.likes);
-            
-            // Update button styling
-            if (isLiked) {
-                likeButton.classList.remove('bg-primary', 'hover:bg-highlight');
-                likeButton.classList.add('bg-red-600', 'hover:bg-red-700');
-                likeButton.querySelector('i').classList.replace('ph-heart', 'ph-fill');
-            } else {
-                likeButton.classList.remove('bg-red-600', 'hover:bg-red-700');
-                likeButton.classList.add('bg-primary', 'hover:bg-highlight');
-                likeButton.querySelector('i').classList.replace('ph-fill', 'ph-heart');
-            }
-        };
-
-        /**
-         * Opens the modal viewer with the selected magazine content.
-         */
-        window.openViewer = (volumeId, url, title) => {
-            currentVolumeId = volumeId;
-            currentVolumeTitle = title;
-            
-            // 1. Show Loading State (New)
-            viewerLoading.classList.remove('hidden');
-            iframe.style.opacity = '0'; // Hide iframe until loaded
-
-            // 2. Set iframe source and title
-            iframe.src = url;
-            modalTitle.textContent = title;
-            
-            // 3. Set up listeners and interactivity
-            switchTab('viewer'); // Always open on viewer tab
-            updateModalLikeState(volumeId); // Update like button state
-            listenForComments(volumeId); // Start comments listener
-            updateShareLinks(title); // Update share links
-            incrementView(volumeId); // Increment view count
-            
-            // Hide the native share button if Web Share API is not supported
-            if (!navigator.share) {
-                document.getElementById('web-share-button').classList.add('hidden');
-            }
-
-            // 4. Handle iframe loading (New)
-            iframe.onload = () => {
-                viewerLoading.classList.add('hidden');
-                iframe.style.opacity = '1'; // Show iframe
-                // The 'onload' handler can fire multiple times, so don't remove it,
-                // just ensure it correctly hides the loader and shows the content.
-                // We'll trust the browser's implementation to only fire once per successful navigation.
-            };
-
-
-            // 5. Show modal with smooth transition
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            document.body.style.overflow = 'hidden'; // Prevent background scrolling
-        };
-
-        /**
-         * Switches between the Magazine Viewer, Comments, and Share tabs.
-         */
-        window.switchTab = (tabName) => {
-            // Tab contents
-            const tabs = {
-                viewer: document.getElementById('viewer-tab'),
-                comments: document.getElementById('comments-tab'),
-                share: document.getElementById('share-tab')
-            };
-            // Tab buttons
-            const buttons = {
-                viewer: document.getElementById('tab-viewer'),
-                comments: document.getElementById('tab-comments'),
-                share: document.getElementById('tab-share')
-            };
-
-            for (const key in tabs) {
-                tabs[key].classList.add('hidden');
-                buttons[key].classList.remove('border-primary', 'text-primary');
-                buttons[key].classList.add('border-transparent', 'text-gray-600', 'hover:border-gray-500');
-            }
-
-            // Show selected tab
-            tabs[tabName].classList.remove('hidden');
-            buttons[tabName].classList.add('border-primary', 'text-primary');
-            buttons[tabName].classList.remove('border-transparent', 'text-gray-600', 'hover:border-gray-500');
-        };
-
-        /**
-         * Closes the modal viewer.
-         */
-        window.closeViewer = () => {
-            // Stop comments listener
-            if (currentCommentsUnsubscribe) {
-                currentCommentsUnsubscribe();
-                currentCommentsUnsubscribe = null;
-            }
-            currentVolumeId = null;
-            currentVolumeTitle = null;
-
-            // Hide modal with smooth transition
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            // Stop the iframe content from loading/playing when closed
-            iframe.src = ''; 
-            document.body.style.overflow = 'auto'; // Re-enable background scrolling
-        };
-
-        // --- 6. Initialization ---
+        // --- 5. Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('current-year').textContent = new Date().getFullYear();
             
-            // Optional: Close modal with ESC key
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
                     closeViewer();
                 }
             });
-            // Initial call to render magazines (will be updated again once auth is ready)
+            // CRITICAL: Call rendering directly without waiting for any async auth/init
             renderMagazines(magazines);
         });
 
