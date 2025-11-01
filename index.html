@@ -3,8 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Annual Magazine Portfolio - Static</title>
+    <title>Annual Magazine Portfolio</title>
     
+    <!-- Load Firebase/Firestore Modules -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, setLogLevel, doc, setDoc, updateDoc, onSnapshot, collection, query, addDoc, getDocs, arrayUnion, arrayRemove, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        window.firebaseImports = { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, getFirestore, setLogLevel, doc, setDoc, updateDoc, onSnapshot, collection, query, addDoc, getDocs, arrayUnion, arrayRemove, serverTimestamp };
+    </script>
+
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -139,6 +148,9 @@
 
             
             <div id="magazine-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                <div class="col-span-full text-center text-white text-lg" id="loading-message">
+                    Loading volumes... Please wait.
+                </div>
                 <!-- Magazine cards rendered here by JavaScript -->
             </div>
             
@@ -151,7 +163,6 @@
 
     
     <!-- MAGAZINE VIEWER MODAL -->
-    <!-- NOTE: Comments and Like tabs/buttons are disabled in this static version -->
     <div id="magazine-modal" class="fixed inset-0 bg-black bg-opacity-80 z-50 hidden transition-opacity duration-300 items-center justify-center p-4" onclick="closeViewer()">
         <div class="bg-card-bg rounded-2xl w-full max-w-6xl h-full max-h-[90vh] shadow-2xl overflow-hidden flex flex-col transform transition-all duration-300" onclick="event.stopPropagation()">
             <div class="flex-shrink-0 p-4 border-b border-gray-300">
@@ -168,11 +179,14 @@
                         <button id="tab-viewer" onclick="switchTab('viewer')" class="py-2 px-4 text-sm font-medium border-b-2 border-primary text-primary transition duration-200">
                             <i class="ph ph-book-open text-lg mr-1 inline-block align-middle"></i> Magazine Viewer
                         </button>
+                        <button id="tab-comments" onclick="switchTab('comments')" class="py-2 px-4 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:border-gray-500 transition duration-200">
+                            <i class="ph ph-chat-circle-dots text-lg mr-1 inline-block align-middle"></i> <span id="comment-count-tab">0</span> Comments
+                        </button>
                         <button id="tab-share" onclick="switchTab('share')" class="py-2 px-4 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:border-gray-500 transition duration-200">
                             <i class="ph ph-share-network text-lg mr-1 inline-block align-middle"></i> Share
                         </button>
-                         <span class="text-red-500 text-sm italic py-2"> (No Comments/Likes in Static Mode)</span>
                     </div>
+                    <span id="firebase-status" class="text-xs font-medium text-gray-500 italic">...</span>
                 </div>
             </div>
 
@@ -193,16 +207,38 @@
                     <iframe id="viewer-iframe" src="" frameborder="0" class="w-full h-full bg-gray-100" style="opacity: 0;"></iframe>
                     
                     
-                    <!-- Like Button Overlay (DISABLED IN STATIC) -->
+                    <!-- Like Button Overlay -->
                     <div class="absolute bottom-0 left-0 right-0 p-3 bg-card-bg/95 backdrop-blur-sm border-t border-gray-300 flex justify-end space-x-4">
-                        <button class="flex items-center space-x-2 px-4 py-2 rounded-full text-gray-400 bg-gray-200 cursor-not-allowed">
+                        <button id="like-button" onclick="toggleLike()" class="flex items-center space-x-2 px-4 py-2 rounded-full font-semibold transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
                             <i class="ph ph-heart text-xl"></i>
-                            <span class="font-semibold">Likes Disabled</span>
+                            <span id="like-count">0</span>
                         </button>
                     </div>
                 </div>
 
                 
+                <!-- Comments Tab Content -->
+                <div id="comments-tab" class="absolute inset-0 bg-gray-50 p-6 flex flex-col hidden transition duration-300 overflow-y-auto">
+                    <h4 class="text-2xl font-bold text-gray-900 mb-4 font-heading border-b pb-2">Volume Comments</h4>
+                    
+                    <!-- Comment Input -->
+                    <div class="flex-shrink-0 mb-6 p-4 bg-white rounded-xl shadow-lg border border-gray-200">
+                        <textarea id="comment-input" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary transition resize-none" rows="3" placeholder="Write a comment..."></textarea>
+                        <button onclick="postComment()" id="post-comment-btn" class="mt-2 w-full py-2 bg-primary text-white font-semibold rounded-lg hover:bg-highlight transition disabled:bg-gray-400 disabled:cursor-not-allowed">
+                            Post Comment
+                        </button>
+                        <p id="comment-error" class="mt-2 text-red-500 text-sm hidden">Error posting comment.</p>
+                        <p id="comment-auth-warning" class="mt-2 text-orange-500 text-sm hidden">Comments are disabled because Firebase could not initialize (e.g., when viewing on GitHub Pages).</p>
+                    </div>
+
+                    <!-- Comments List -->
+                    <div id="comments-list" class="flex-grow space-y-4">
+                        <div id="comments-loading" class="text-center text-gray-500 mt-8">Loading comments...</div>
+                        <div id="no-comments" class="text-center text-gray-500 mt-8 hidden">Be the first to leave a comment!</div>
+                    </div>
+                </div>
+
+
                 <!-- Share Tab Content -->
                 <div id="share-tab" class="absolute inset-0 bg-gray-100 p-8 flex flex-col hidden transition duration-300 overflow-y-auto">
                     <h4 class="text-2xl font-bold text-gray-900 mb-2 font-heading">Share This Volume</h4>
@@ -270,9 +306,9 @@
     </footer>
 
     
-    <!-- JAVASCRIPT LOGIC (Static Rendering Only) -->
+    <!-- JAVASCRIPT LOGIC -->
     <script>
-        // --- 1. Magazine Data Management ---
+        // --- 1. Global State and Imports ---
         const magazines = [
             {
                 id: "v2025-design",
@@ -302,15 +338,17 @@
                 isNew: false
             }
         ];
-
+        
+        let db, auth;
+        let userId = null;
+        let isAuthReady = false;
+        
         let currentVolumeId = null;
         let currentVolumeTitle = null; 
-        let magazineStats = {
-            "v2025-design": { views: 3500, likes: 212 },
-            "v2024-digital-age": { views: 5200, likes: 450 },
-            "v2023-craftsmanship": { views: 1800, likes: 120 }
-        };
-        let userLikes = {}; // Always empty in static mode
+        
+        let magazineStats = {}; // Fetched from Firestore or default to 0
+        let userLikes = {}; // User's like status
+        let unsubscribeComments = null; // Store comment listener for cleanup
 
         // --- 2. DOM Elements and Utility Functions ---
         const magazineGrid = document.getElementById('magazine-grid');
@@ -318,11 +356,18 @@
         const iframe = document.getElementById('viewer-iframe');
         const modalTitle = document.getElementById('modal-title');
         const viewerLoading = document.getElementById('viewer-loading');
+        const postCommentBtn = document.getElementById('post-comment-btn');
+        const likeButton = document.getElementById('like-button');
+        const firebaseStatus = document.getElementById('firebase-status');
+        const commentAuthWarning = document.getElementById('comment-auth-warning');
+        const loadingMessage = document.getElementById('loading-message');
+
 
         /**
          * Formats a number for readability (e.g., 12345 -> 12.3K)
          */
         const formatCount = (num) => {
+            if (num === undefined || num === null) return '0';
             if (num >= 1000) {
                 return (num / 1000).toFixed(1) + 'K';
             }
@@ -334,13 +379,16 @@
          */
         const createMagazineCard = (mag) => {
             const stats = magazineStats[mag.id] || { views: 0, likes: 0 };
-            const isLiked = userLikes[mag.id]; // Always false in static mode
+            const isLiked = userLikes[mag.id] || false; 
 
             const newBadge = mag.isNew ? `
                 <span class="absolute top-2 right-2 inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-white bg-highlight rounded-full transform rotate-3 shadow-lg z-20">
                     NEW!
                 </span>
             ` : '';
+
+            const likeIcon = isLiked ? 'ph-fill ph-heart text-red-500' : 'ph ph-heart text-gray-600';
+            const likeText = isLiked ? 'Loved' : 'Loves';
 
             return `
                 <div id="card-${mag.id}" class="relative rounded-2xl shadow-2xl overflow-hidden hover:shadow-primary/50 transition-all duration-500 transform hover:scale-[1.02] cursor-pointer"
@@ -368,8 +416,8 @@
                                 <span class="stats-views" data-id="${mag.id}">${formatCount(stats.views)} Views</span>
                             </span>
                             <span class="flex items-center space-x-1">
-                                <i class="ph ph-heart text-base ${isLiked ? 'text-red-500' : 'text-gray-600'}"></i>
-                                <span class="stats-likes" data-id="${mag.id}">${formatCount(stats.likes)} Loves</span>
+                                <i class="stats-like-icon ${likeIcon}"></i>
+                                <span class="stats-likes" data-id="${mag.id}">${formatCount(stats.likes)} ${likeText}</span>
                             </span>
                         </div>
                     </div>
@@ -381,6 +429,7 @@
          * Renders a list of magazine cards to the grid.
          */
         const renderMagazines = (list) => {
+            loadingMessage.classList.add('hidden');
             // Sort by year, newest first
             list.sort((a, b) => b.year - a.year);
             
@@ -398,7 +447,7 @@
             const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
             
             if (!searchTerm) {
-                renderMagazines(magazines); // Show all if search is empty
+                renderMagazines(magazines); 
                 return;
             }
 
@@ -412,7 +461,317 @@
         };
 
 
-        // --- 3. UI/Modal Functions ---
+        // --- 3. Firebase & Firestore Logic ---
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        const getMagazineDocRef = (magazineId) => {
+            if (!db) return null;
+            return firebaseImports.doc(db, 'artifacts', appId, 'public', 'data', 'magazines', magazineId);
+        }
+
+        const getUserLikesDocRef = () => {
+             if (!db || !userId) return null;
+             // Store likes privately for the user
+            return firebaseImports.doc(db, 'artifacts', appId, 'users', userId, 'likes', 'magazines');
+        }
+
+        const getCommentsCollectionRef = (magazineId) => {
+            if (!db) return null;
+            return firebaseImports.collection(db, 'artifacts', appId, 'public', 'data', 'magazines', magazineId, 'comments');
+        }
+        
+        /**
+         * Safely initializes Firebase and Auth.
+         * This check prevents the app from crashing when hosted externally (like on GitHub Pages).
+         */
+        const initializeFirebase = async () => {
+            const { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, getFirestore, setLogLevel } = window.firebaseImports;
+            
+            // Check for required global variables which are only present in the Canvas environment.
+            if (typeof __firebase_config !== 'undefined' && typeof __initial_auth_token !== 'undefined') {
+                try {
+                    console.log('Firebase Config found. Initializing...');
+                    const firebaseConfig = JSON.parse(__firebase_config);
+                    
+                    // CRITICAL CHECK: Ensure projectId is present (addresses the specific error reported)
+                    if (!firebaseConfig.projectId) {
+                        throw new Error('Project ID is missing from the configuration.');
+                    }
+
+                    const app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                    
+                    setLogLevel('debug'); // Enable Firestore logging
+
+                    // Sign in using the provided custom token or anonymously
+                    if (__initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+
+                    onAuthStateChanged(auth, (user) => {
+                        userId = user ? user.uid : crypto.randomUUID();
+                        isAuthReady = true;
+                        firebaseStatus.textContent = 'Active (UID: ' + userId.substring(0, 8) + '...)';
+                        firebaseStatus.classList.remove('text-gray-500');
+                        firebaseStatus.classList.add('text-primary');
+
+                        console.log('Auth state changed. User ID:', userId);
+                        
+                        // Start listeners only after auth is confirmed
+                        startMagazineListeners(); 
+                    });
+
+                } catch (e) {
+                    console.error('Failed to initialize or sign into Firebase. Using static data only.', e);
+                    firebaseStatus.textContent = 'Disabled (Check Console)';
+                    // Fallback: Ensure the app doesn't crash if Firebase setup fails
+                    isAuthReady = true;
+                    renderMagazines(magazines); // Render static content immediately
+                    commentAuthWarning.classList.remove('hidden');
+                }
+            } else {
+                console.warn('Firebase configuration not found. Running in STATIC MODE. Interactions are disabled.');
+                firebaseStatus.textContent = 'Static Mode (External Host)';
+                // Render static content immediately
+                isAuthReady = true;
+                renderMagazines(magazines); 
+                commentAuthWarning.classList.remove('hidden');
+            }
+        };
+
+
+        const startMagazineListeners = () => {
+            if (!isAuthReady || !db) return;
+
+            // 1. Listen for Public Magazine Stats (Views/Likes)
+            const collectionRef = firebaseImports.collection(db, 'artifacts', appId, 'public', 'data', 'magazines');
+            firebaseImports.onSnapshot(collectionRef, (snapshot) => {
+                snapshot.forEach((doc) => {
+                    magazineStats[doc.id] = doc.data();
+                });
+                renderMagazines(magazines); // Re-render to update stats
+                updateModalLikeState(); // Update modal if open
+            }, (error) => {
+                console.error("Error listening to magazine stats:", error);
+            });
+
+            // 2. Listen for Current User's Likes
+            const userLikesRef = getUserLikesDocRef();
+            if (userLikesRef) {
+                 firebaseImports.onSnapshot(userLikesRef, (doc) => {
+                    const data = doc.data();
+                    if (data && data.likedVolumes) {
+                        // Convert array of IDs into a map for fast lookup
+                        userLikes = data.likedVolumes.reduce((acc, id) => {
+                            acc[id] = true;
+                            return acc;
+                        }, {});
+                    } else {
+                        userLikes = {};
+                    }
+                    renderMagazines(magazines); // Re-render to update heart icons
+                    updateModalLikeState(); // Update modal if open
+                }, (error) => {
+                    console.error("Error listening to user likes:", error);
+                });
+            } else {
+                // In case of static mode, ensure render runs
+                renderMagazines(magazines);
+            }
+        };
+
+        const updateModalLikeState = () => {
+            if (!currentVolumeId) return;
+
+            const isLiked = userLikes[currentVolumeId] || false;
+            const stats = magazineStats[currentVolumeId] || { likes: 0 };
+            
+            // Update button visual
+            const icon = likeButton.querySelector('i');
+            const countSpan = document.getElementById('like-count');
+
+            if(isLiked) {
+                icon.className = 'ph-fill ph-heart text-white';
+                likeButton.classList.remove('bg-gray-200', 'text-gray-800');
+                likeButton.classList.add('bg-red-500', 'hover:bg-red-600', 'text-white');
+            } else {
+                icon.className = 'ph ph-heart text-red-500';
+                likeButton.classList.add('bg-gray-200', 'text-gray-800');
+                likeButton.classList.remove('bg-red-500', 'hover:bg-red-600', 'text-white');
+            }
+            
+            // Update count
+            countSpan.textContent = formatCount(stats.likes);
+            
+            // Disable if not authed
+            likeButton.disabled = !db;
+        };
+        
+        window.toggleLike = async () => {
+            if (!db || !isAuthReady || !currentVolumeId) {
+                console.warn("Firestore not available or not ready to handle likes.");
+                return;
+            }
+
+            const isLiked = userLikes[currentVolumeId];
+            const volumeRef = getMagazineDocRef(currentVolumeId);
+            const userLikesRef = getUserLikesDocRef();
+
+            if (!volumeRef || !userLikesRef) return;
+
+            try {
+                if (isLiked) {
+                    // 1. Remove like from user's list
+                    await firebaseImports.updateDoc(userLikesRef, {
+                        likedVolumes: firebaseImports.arrayRemove(currentVolumeId)
+                    });
+                    // 2. Decrement public count
+                    await firebaseImports.updateDoc(volumeRef, {
+                         likes: firebaseImports.firebaseImports.increment(-1)
+                    });
+                } else {
+                    // 1. Add like to user's list
+                     await firebaseImports.setDoc(userLikesRef, {
+                        likedVolumes: firebaseImports.arrayUnion(currentVolumeId)
+                    }, { merge: true });
+                    // 2. Increment public count
+                    await firebaseImports.setDoc(volumeRef, {
+                         likes: firebaseImports.firebaseImports.increment(1)
+                    }, { merge: true });
+                }
+            } catch (e) {
+                console.error("Error toggling like:", e);
+                alert('Could not process like request. Check console for details.');
+            }
+        };
+
+        const handleViewsIncrement = async (magazineId) => {
+             if (!db || !isAuthReady) return;
+
+            // Only increment if we haven't tracked this view in the current session
+            const sessionKey = `viewed_${magazineId}`;
+            if (sessionStorage.getItem(sessionKey)) return;
+
+            const volumeRef = getMagazineDocRef(magazineId);
+            if (!volumeRef) return;
+
+            try {
+                await firebaseImports.setDoc(volumeRef, {
+                    views: firebaseImports.firebaseImports.increment(1)
+                }, { merge: true });
+                sessionStorage.setItem(sessionKey, 'true');
+            } catch (e) {
+                console.error("Error incrementing view count:", e);
+            }
+        }
+        
+        window.postComment = async () => {
+            const commentInput = document.getElementById('comment-input');
+            const commentText = commentInput.value.trim();
+            const commentError = document.getElementById('comment-error');
+
+            if (!db || !isAuthReady) {
+                commentError.textContent = 'Comments are disabled in static mode.';
+                commentError.classList.remove('hidden');
+                return;
+            }
+            if (!commentText) {
+                commentError.textContent = 'Comment cannot be empty.';
+                commentError.classList.remove('hidden');
+                return;
+            }
+
+            commentError.classList.add('hidden');
+            postCommentBtn.disabled = true;
+
+            try {
+                const commentsRef = getCommentsCollectionRef(currentVolumeId);
+                const userName = `User ${userId.substring(0, 6)}`;
+                
+                await firebaseImports.addDoc(commentsRef, {
+                    userId: userId,
+                    userName: userName,
+                    text: commentText,
+                    timestamp: firebaseImports.serverTimestamp()
+                });
+
+                commentInput.value = ''; // Clear input
+            } catch (e) {
+                console.error("Error posting comment:", e);
+                commentError.textContent = 'Failed to post comment. Try again.';
+                commentError.classList.remove('hidden');
+            } finally {
+                postCommentBtn.disabled = false;
+            }
+        };
+
+        const renderComment = (comment) => {
+            const timeString = comment.timestamp 
+                ? new Date(comment.timestamp.seconds * 1000).toLocaleString() 
+                : 'Just now...';
+
+            // Ensure userName exists, default to a user ID snippet if not
+            const userName = comment.userName || `User ${comment.userId.substring(0, 6)}`;
+
+            return `
+                <div class="p-4 bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div class="flex justify-between items-center mb-1">
+                        <p class="font-semibold text-gray-900">${userName}</p>
+                        <span class="text-xs text-gray-500">${timeString}</span>
+                    </div>
+                    <p class="text-gray-700">${comment.text}</p>
+                </div>
+            `;
+        };
+
+        const listenForComments = (magazineId) => {
+            if (unsubscribeComments) {
+                unsubscribeComments(); // Clean up previous listener
+                unsubscribeComments = null;
+            }
+            if (!db || !isAuthReady) {
+                document.getElementById('comments-loading').classList.add('hidden');
+                document.getElementById('comments-list').innerHTML = ''; // Clear list in static mode
+                return;
+            }
+
+            const commentsRef = getCommentsCollectionRef(magazineId);
+            const q = firebaseImports.query(commentsRef, firebaseImports.orderBy('timestamp', 'desc'));
+            
+            const commentsListDiv = document.getElementById('comments-list');
+            const noCommentsDiv = document.getElementById('no-comments');
+            const commentsLoadingDiv = document.getElementById('comments-loading');
+            const commentCountTab = document.getElementById('comment-count-tab');
+
+            commentsLoadingDiv.classList.remove('hidden');
+
+            unsubscribeComments = firebaseImports.onSnapshot(q, (snapshot) => {
+                commentsLoadingDiv.classList.add('hidden');
+                
+                commentCountTab.textContent = snapshot.size;
+
+                if (snapshot.empty) {
+                    noCommentsDiv.classList.remove('hidden');
+                    commentsListDiv.innerHTML = '';
+                    return;
+                }
+                
+                noCommentsDiv.classList.add('hidden');
+                const commentsHtml = snapshot.docs.map(doc => renderComment(doc.data())).join('');
+                commentsListDiv.innerHTML = commentsHtml;
+                
+            }, (error) => {
+                console.error("Error listening to comments:", error);
+                commentsLoadingDiv.textContent = 'Error loading comments.';
+            });
+        };
+
+
+        // --- 4. UI/Modal Functions ---
         
         window.openMenu = () => {
             document.getElementById('mobile-menu').classList.add('open');
@@ -438,7 +797,8 @@
             
             switchTab('viewer'); 
             updateShareLinks(title);
-            
+
+            // Hide web share button if not supported
             if (!navigator.share) {
                 document.getElementById('web-share-button').classList.add('hidden');
             }
@@ -446,8 +806,13 @@
             iframe.onload = () => {
                 viewerLoading.classList.add('hidden');
                 iframe.style.opacity = '1';
+                // Only track view if Firebase is available
+                handleViewsIncrement(volumeId);
             };
 
+            // Start listening for comments when modal opens
+            listenForComments(volumeId);
+            updateModalLikeState();
 
             modal.classList.remove('hidden');
             modal.classList.add('flex');
@@ -455,14 +820,16 @@
         };
 
         window.switchTab = (tabName) => {
-            // Tab contents (only viewer and share exist in static mode)
+            // Tab contents
             const tabs = {
                 viewer: document.getElementById('viewer-tab'),
+                comments: document.getElementById('comments-tab'),
                 share: document.getElementById('share-tab')
             };
             // Tab buttons
             const buttons = {
                 viewer: document.getElementById('tab-viewer'),
+                comments: document.getElementById('tab-comments'),
                 share: document.getElementById('tab-share')
             };
 
@@ -479,11 +846,19 @@
                 buttons[tabName].classList.add('border-primary', 'text-primary');
                 buttons[tabName].classList.remove('border-transparent', 'text-gray-600', 'hover:border-gray-500');
             }
+
+            // Disable comment posting if not authed
+            postCommentBtn.disabled = !db;
         };
 
         window.closeViewer = () => {
             currentVolumeId = null;
             currentVolumeTitle = null;
+
+            if (unsubscribeComments) {
+                unsubscribeComments(); // Clean up comments listener
+                unsubscribeComments = null;
+            }
 
             modal.classList.add('hidden');
             modal.classList.remove('flex');
@@ -491,7 +866,7 @@
             document.body.style.overflow = 'auto'; 
         };
 
-        // --- 4. Sharing Functions (Unchanged) ---
+        // --- 5. Sharing Functions ---
         const updateShareLinks = (title) => {
             const shareUrl = window.location.href; 
             const encodedShareUrl = encodeURIComponent(shareUrl);
@@ -550,7 +925,7 @@
         }
 
 
-        // --- 5. Initialization ---
+        // --- 6. Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('current-year').textContent = new Date().getFullYear();
             
@@ -559,8 +934,14 @@
                     closeViewer();
                 }
             });
-            // CRITICAL: Call rendering directly without waiting for any async auth/init
-            renderMagazines(magazines);
+
+            // Wait for Firebase module imports to load, then initialize
+            const checkImports = setInterval(() => {
+                if (window.firebaseImports) {
+                    clearInterval(checkImports);
+                    initializeFirebase();
+                }
+            }, 100);
         });
 
     </script>
